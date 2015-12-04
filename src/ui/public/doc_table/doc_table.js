@@ -51,6 +51,19 @@ define(function (require) {
           };
         }());
 
+        // should this table show a CCC submission element?
+        $scope.showSubmitToCCC = function () {
+          var show = false;
+          if ($scope.hits && $scope.hits[0] && $scope.hits[0]._type === 'aggregated-resource') {
+            show = true;
+          }
+          return show;
+        };
+        // send the resources to a CCC workflow
+        $scope.submitToCCC = function () {
+          alert('submitToCCC: number of hits = ' + $scope.hits.length);
+        };
+
         $scope.addRows = function () {
           $scope.limit += 50;
         };

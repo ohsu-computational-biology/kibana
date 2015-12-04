@@ -1,6 +1,16 @@
 <div
   ng-if="hits.length"
   ng-class="{ loading: searchSource.activeFetchCount > 0 }">
+
+  <div class="panel-heading"  ng-if="showSubmitToCCC()">
+    <span class="panel-title"></span>
+    <div class="btn-group  pull-right">
+      <a aria-label="CCC" ng-click="submitToCCC()" >
+        <i aria-hidden="true" class="fa fa-cloud-upload">CCC</i>
+      </a>
+    </div>
+  </div>
+
   <paginate ng-if="!infiniteScroll" list="hits" per-page="50" top-controls="true">
     <table class="kbn-table table" ng-if="indexPattern">
       <thead
