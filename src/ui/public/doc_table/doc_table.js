@@ -11,7 +11,7 @@ define(function (require) {
   require('ui/doc_table/components/table_row');
 
   require('ui/modules').get('kibana')
-  .directive('docTable', function (config, Notifier, getAppState) {
+  .directive('docTable', function (config, Notifier, getAppState, $http) {
     return {
       restrict: 'E',
       template: html,
@@ -60,8 +60,30 @@ define(function (require) {
           return show;
         };
         // send the resources to a CCC workflow
+        $scope.my_http = $http; //TODO why is $http not visible unless I save it
+        $scope.cccWorkflow = {};
+        $scope.cccWorkflow.names = ['wdl1','wdl2','wdl3']; //TODO - get from config
+        $scope.cccWorkflow.name = undefined;
+        if (!$scope.hits || $scope.hits.length === 0) {
+          $scope.cccStatusText = '';
+        } else {
+          $scope.cccStatusText = 'Please select a workflow';
+        }
         $scope.submitToCCC = function () {
-          alert('submitToCCC: number of hits = ' + $scope.hits.length);
+          if ($scope.cccWorkflow.name  === undefined) {
+            $scope.cccStatusText = 'Please select a workflow';
+            return;
+          }
+          // grab the ccc_dids
+          var cccDIDs = $scope.hits.map(function (e) {return e._source.ccc_did;});
+          $http.post('http://localhost:3000/api/workflows/v1',{data:cccDIDs})
+            .then(function (response) {
+              $scope.cccStatusText = response.statusText + ' ' + response.data.status + ' ' + response.data.id;
+              console.log(response);
+            }, function (response) {
+              $scope.cccStatusText = response.statusText + ' (error)';
+              console.log(response);
+            });
         };
 
         $scope.addRows = function () {

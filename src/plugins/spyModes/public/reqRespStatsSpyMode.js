@@ -53,5 +53,14 @@ define(function (require) {
       template: reqRespStatsHTML,
       link: linkReqRespStats
     };
+  })
+  .register(function () {
+    return {
+      name: 'ccc',
+      display: 'CCC',
+      order: 5,
+      template: reqRespStatsHTML,
+      link: linkReqRespStats
+    };
   });
 });

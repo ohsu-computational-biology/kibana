@@ -5,9 +5,15 @@
   <div class="panel-heading"  ng-if="showSubmitToCCC()">
     <span class="panel-title"></span>
     <div class="btn-group  pull-right">
+      <label for="repeatSelect">CCC wdl:</label>
+      <select name="repeatSelect" id="repeatSelect" ng-model="cccWorkflow.name">
+        <option value="">Choose</option>
+        <option ng-repeat="name in cccWorkflow.names" value="{{name}}">{{name}}</option>
+      </select>
       <a aria-label="CCC" ng-click="submitToCCC()" >
-        <i aria-hidden="true" class="fa fa-cloud-upload">CCC</i>
+        <i aria-hidden="true" class="fa fa-cloud-upload"/>
       </a>
+      {{cccStatusText}}
     </div>
   </div>
 

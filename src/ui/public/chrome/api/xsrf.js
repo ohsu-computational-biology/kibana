@@ -18,7 +18,12 @@ export default function (chrome, internals) {
       return {
         request: function (opts) {
           const { kbnXsrfToken = internals.xsrfToken } = opts;
-          if (kbnXsrfToken) {
+          var bypassKbnXsrfToken = false;
+          if (opts.url.indexOf('http') > -1 && opts.url.indexOf(window.location.host) < 0) {
+            //console.log("bypassing 'kbn-xsrf-token' for " + opts.url );
+            bypassKbnXsrfToken = true;
+          }
+          if (kbnXsrfToken && !bypassKbnXsrfToken) {
             set(opts, ['headers', 'kbn-xsrf-token'], kbnXsrfToken);
           }
           return opts;
