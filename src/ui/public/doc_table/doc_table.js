@@ -51,7 +51,12 @@ define(function (require) {
           };
         }());
 
+        // ------------------------
+        // ------------------------ START CCC
+        // ------------------------
+
         // should this table show a CCC submission element?
+        // used by ./doc_table.html
         $scope.showSubmitToCCC = function () {
           var show = false;
           if ($scope.hits && $scope.hits[0] && $scope.hits[0]._type === 'aggregated-resource') {
@@ -59,7 +64,10 @@ define(function (require) {
           }
           return show;
         };
+
         // send the resources to a CCC workflow
+        // used by ./doc_table.html
+        // ... initialization
         $scope.my_http = $http; //TODO why is $http not visible unless I save it
         $scope.cccWorkflow = {};
         $scope.cccWorkflow.names = ['wdl1','wdl2','wdl3']; //TODO - get from config
@@ -69,22 +77,96 @@ define(function (require) {
         } else {
           $scope.cccStatusText = 'Please select a workflow';
         }
+
+
+
+        // ... click handler
+
         $scope.submitToCCC = function () {
           if ($scope.cccWorkflow.name  === undefined) {
             $scope.cccStatusText = 'Please select a workflow';
             return;
           }
-          // grab the ccc_dids
-          var cccDIDs = $scope.hits.map(function (e) {return e._source.ccc_did;});
-          $http.post('http://localhost:3000/api/workflows/v1',{data:cccDIDs})
-            .then(function (response) {
+          // grab the ccc_dids + any other `visible` data
+
+          // var workflowInputs = $scope.hits.map(function (e) {
+          //   var p = {};
+          //   p['ccc_did'] = e._source.ccc_did;
+          //   $scope.columns.forEach(function(c){
+          //     p[c] = e._source[c];
+          //   });
+          //   return p;
+          // });
+
+          var cccDIDs = $scope.hits.map(function (e) {
+            return e._source.ccc_did;
+          });
+          var workflowInputs = { 'test.echo.array':cccDIDs };
+
+
+          var metaWDL = `
+          task echo {
+            Array[String] array
+            command <<<
+              echo \${sep=' ' array}
+            >>>
+            output {
+              String str = read_string(stdout())
+            }
+          }
+
+          workflow test {
+            call echo
+          }
+          `;
+
+
+          // serialize the inputs as form data
+          var formData = new FormData();
+          formData.append(
+            'wdlSource',
+            new Blob([metaWDL],
+                     {type: 'application/octet-stream','Content-Disposition': 'form-data; name="wdlSource"; filename="hello.wdl"'}),
+            'wdlSource'
+            );
+          formData.append(
+            'workflowInputs',
+            new Blob([JSON.stringify(workflowInputs)],
+                     {type: 'application/octet-stream','Content-Disposition': 'form-data; name="workflowInputs"; filename="hello.json"'}),
+            'workflowInputs'
+            );
+
+          // note: important that Content-Type is undefined, so that $http completes multipart formdata correctly :-(
+          // see: http://uncorkedstudios.com/blog/multipartformdata-file-upload-with-angularjs
+          var request = {
+            method: 'POST',
+            url: '/api/workflows/v1',
+            headers: {'Content-Type': undefined},
+            data: formData,
+            transformRequest: function (data) { return data; }
+          };
+
+          // send the request and handle response
+          $http(request).then(
+            // OK
+            function (response) {
+              console.log('success',response);
               $scope.cccStatusText = response.statusText + ' ' + response.data.status + ' ' + response.data.id;
-              console.log(response);
-            }, function (response) {
-              $scope.cccStatusText = response.statusText + ' (error)';
-              console.log(response);
-            });
+            },
+            // Error
+            function (response) {
+              console.log('error',response);
+              $scope.cccStatusText = response.statusText + ' ' + response.data.status + ' ' + response.data.id;
+            }
+          );
+
+
         };
+
+
+        // ------------------------
+        // ------------------------ END CCC
+        // ------------------------
 
         $scope.addRows = function () {
           $scope.limit += 50;

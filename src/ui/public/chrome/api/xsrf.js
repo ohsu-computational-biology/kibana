@@ -19,7 +19,7 @@ export default function (chrome, internals) {
         request: function (opts) {
           const { kbnXsrfToken = internals.xsrfToken } = opts;
           var bypassKbnXsrfToken = false;
-          if (opts.url.indexOf('http') > -1 && opts.url.indexOf(window.location.host) < 0) {
+          if (opts.url.indexOf('/api') > -1) {
             //console.log("bypassing 'kbn-xsrf-token' for " + opts.url );
             bypassKbnXsrfToken = true;
           }

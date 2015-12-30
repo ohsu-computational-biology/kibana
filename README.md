@@ -4,6 +4,39 @@
 
 Kibana is an open source ([Apache Licensed](https://github.com/elastic/kibana/blob/master/LICENSE.md)), browser based analytics and search dashboard for Elasticsearch. Kibana is a snap to setup and start using. Kibana strives to be easy to get started with, while also being flexible and powerful, just like Elasticsearch.
 
+## CCC Modifications
+
+curl -XPUT  $(docker-machine ip default):9200/.kibana/_settings  -d '{ "index" : { "max_result_window" : 2147483647 } }'
+{"acknowledged":true}
+
+curl -XPOST  $(docker-machine ip default):9200/.kibana/config/4.2.2-snapshot/_update -d '{
+   "doc" : {
+     "cccWdlURL":"http://localhost:3000/api/workflows/v1"  
+    }
+}'
+
+curl -XPOST  $(docker-machine ip default):9200/.kibana/config/4.2.2-snapshot/_update -d '{
+   "doc" : {
+     "cccWdlURL":"http://kibana.ccc.org:8000/api/workflows/v1"  
+    }
+}'
+
+curl -XPOST  $(docker-machine ip default):9200/.kibana/config/4.2.2-snapshot/_update -d '{
+   "doc" : {
+     "cccWdlURL":"/api/workflows/v1"  
+    }
+}'
+
+##to build
+```
+ # in /kibana
+ $ cd kibana
+ $ npm run build
+ $ cp target/kibana-4.2.2-snapshot-linux-x64.tar.gz dms-es/services/kibana/kibana-4.2.2-snapshot-linux-x64.tar.gz
+ # copy contents of sha1  dms-es/services/kibana/kibana-4.2.2-snapshot-linux-x64.tar to dms-es/services/kibana/Dockerfile
+
+
+
 ## Requirements
 
 - Elasticsearch version 2.0.0 or later
