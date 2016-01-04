@@ -34,7 +34,26 @@ curl -XPOST  $(docker-machine ip default):9200/.kibana/config/4.2.2-snapshot/_up
  $ npm run build
  $ cp target/kibana-4.2.2-snapshot-linux-x64.tar.gz dms-es/services/kibana/kibana-4.2.2-snapshot-linux-x64.tar.gz
  # copy contents of sha1  dms-es/services/kibana/kibana-4.2.2-snapshot-linux-x64.tar to dms-es/services/kibana/Dockerfile
+```
 
+## to run in developmemt
+
+```
+# assume dms-es docker compose is running
+
+# kill our deployed version
+$ docker kill kibana 
+
+# start a docker image so nginx will pick it up
+
+$ docker run -it -v $(pwd):/src -p 0.0.0.0:5601:5601  --link elasticsearch kibana-dev
+
+# once inside, start kibana in dev mode
+
+$ cd /src
+$ npm start 
+
+```
 
 
 ## Requirements
