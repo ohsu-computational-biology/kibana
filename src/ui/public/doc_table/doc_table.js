@@ -70,7 +70,14 @@ define(function (require) {
         // ... initialization
         $scope.my_http = $http; //TODO why is $http not visible unless I save it
         $scope.cccWorkflow = {};
-        $scope.cccWorkflow.names = ['wdl1','wdl2','wdl3']; //TODO - get from config
+        // see wdl_examples/kibana_add to see how wdl's are added
+        var workflows = config._vals().cccWdlWorkflows;
+        $scope.cccWorkflow.names = [];
+        for (var prop in workflows) {
+          if (workflows.hasOwnProperty(prop)) {
+            $scope.cccWorkflow.names.push(prop);
+          }
+        }
         $scope.cccWorkflow.name = undefined;
         if (!$scope.hits || $scope.hits.length === 0) {
           $scope.cccStatusText = '';
@@ -87,7 +94,24 @@ define(function (require) {
             $scope.cccStatusText = 'Please select a workflow';
             return;
           }
+
+          var workflows = config._vals().cccWdlWorkflows;
+          var workflow = undefined;
+          for (var prop in workflows) {
+            if (prop === $scope.cccWorkflow.name) {
+              workflow = workflows[prop];
+            }
+          }
+          if (!workflow) {
+            $scope.cccStatusText = 'Workflow ' + $scope.cccWorkflow.name + ' not found.';
+            return;
+          }
+          window.atob(workflow.wdl_base64_script_body);
+
           // grab the ccc_dids + any other `visible` data
+
+          //TODO - the js side of this is trivial, however: we don't know how to
+          // create an Array[Object] in wdl
 
           // var workflowInputs = $scope.hits.map(function (e) {
           //   var p = {};
@@ -98,27 +122,15 @@ define(function (require) {
           //   return p;
           // });
 
+          //TODO - so, for now just create a set of Array[String] with ccc_did
           var cccDIDs = $scope.hits.map(function (e) {
             return e._source.ccc_did;
           });
-          var workflowInputs = { 'test.echo.array':cccDIDs };
+          var workflowInputs = {};
+          workflowInputs[workflow.meta_param_name] = cccDIDs;
 
 
-          var metaWDL = `
-          task echo {
-            Array[String] array
-            command <<<
-              echo \${sep=' ' array}
-            >>>
-            output {
-              String str = read_string(stdout())
-            }
-          }
-
-          workflow test {
-            call echo
-          }
-          `;
+          var metaWDL = window.atob(workflow.wdl_base64_script_body);
 
 
           // serialize the inputs as form data
@@ -151,7 +163,15 @@ define(function (require) {
             // OK
             function (response) {
               console.log('success',response);
-              $scope.cccStatusText = response.statusText + ' ' + response.data.status + ' ' + response.data.id;
+              $scope.cccStatusText = response.statusText + ' ' + response.data.status;
+              $scope.cccWdlJobId = response.data.id;
+              // TODO - keep a record for our dashboard ? if so, do it here ...
+              // var request = {
+              //   method: 'POST',
+              //   url: '/ccc/workflows/'+response.data.id,
+              //   data: {id:workflow.id, workflowInputs:workflowInputs}
+              // };
+              // $http(request).then(function (response) {console.log('OK',response)},function (response) {console.log('ERROR',response)});
             },
             // Error
             function (response) {

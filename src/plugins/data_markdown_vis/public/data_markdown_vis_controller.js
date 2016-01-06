@@ -3,7 +3,7 @@ define(function (require) {
   var marked = require('marked');
   marked.setOptions({
     gfm: true, // Github-flavored markdown
-    sanitize: true // Sanitize HTML tags
+    sanitize: false // Sanitize HTML tags
   });
 
   // get the kibana/data_markdown_vis module, and make sure that it requires the "kibana" module if it
@@ -21,13 +21,18 @@ define(function (require) {
     var metrics = $scope.metrics = [];
 
     //TODO - why is $sce always visible in these functions, but I need to
-    // have a scoped variable to hold into interpolate?
+    // have a scoped variable to hold onto interpolate?
     $scope.my_interpolate = $interpolate;
+    $scope.my_route = $route;
 
     // iterpolate the markdown using the response as context
     //TODO loop through hits or aggregation reintpreting
     $scope.processMarkdown = function (markdown,resp) {
       if (!$scope.markdown) {return;}
+      marked.setOptions({
+        gfm: true, // Github-flavored markdown
+        sanitize: false // Sanitize HTML tags
+      });
       var exp = $scope.my_interpolate(marked(markdown));
       $scope.html = $sce.trustAsHtml(exp(resp));
     };
