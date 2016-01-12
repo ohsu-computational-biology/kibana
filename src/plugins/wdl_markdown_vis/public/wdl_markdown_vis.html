@@ -1,3 +1,46 @@
-<div ng-controller="KbnWdlMarkdownVisController" class="markdown-vis">
-    <div ng-bind-html="wdl_html"></div>
+<div ng-controller="KbnWdlMarkdownVisController" class="markdown-vis container-fluid">
+    <div ng-if="cccHits" >
+
+      <div  >
+        <h2>WDL Script</h2>
+        <div class="btn-group  pull-left col-md-12">
+          <label for="repeatSelect">CCC wdl:</label>
+          <select name="repeatSelect" id="repeatSelect" ng-model="cccWorkflow.name">
+            <option value="">Choose</option>
+            <option ng-repeat="name in cccWorkflow.names" value="{{name}}">{{name}}</option>
+          </select>
+        </div>
+
+        <div >
+          <div class="col-md-6"><textarea rows="10"  cols="80"  ng-model="sourceInputs.wdlSource"  placeholder="Paste wdl source here"></textarea></div>
+          <div class="col-md-12">
+            <button class="btn btn-xs" aria-label="Validate WDL script" ng-click="validate(sourceInputs.wdlSource)" ng-disabled="!sourceInputs.wdlSource" >
+              Validate<span aria-hidden="true" class="fa fa-check"></span>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div  class="pull-left">
+        <h2>Document Meta &amp; Parameters</h2>
+        <div >
+          <div class="col-md-4"><select size="12" id="column-selection" multiple ng-multiple="true" ng-model="columnSelections.selectedColumns" ng-options="c.name for c in columns"></select></div>
+          <div class="col-md-8"><input ng-model="sourceInputs.metaParamName"/><br/><textarea rows="9" cols="80"  ng-model="sourceInputs.workflowInputs"></textarea></div>
+          <div class="col-md-12">
+            <button class="btn btn-xs" aria-label="Send WDL script" ng-click="submit(sourceInputs.wdlSource)" ng-disabled="!sourceInputs.wdlSource">
+              Submit<span aria-hidden="true" class="fa fa-send"></span>
+            </button>
+          </div>
+          <div class="col-md-12 alert alert-info" ng-repeat="info in submission.messages">{{info}}</div>
+        </div>
+      </div>
+    </div>
+    <div class="row col-md-12 alert alert-info" ng-repeat="info in validation.messages track by $index">{{info}}</div>
+    <div class="col-md-12">
+      <button class="btn btn-xs" aria-label="Show WDL response" ng-click="results(outputs.wdlIdentifier)" ng-disabled="!outputs.wdlIdentifier">
+        Refresh<span aria-hidden="true" class="fa fa-refresh"></span>
+      </button>
+    </div>
+    <div  class="pull-left">
+      <div ng-bind-html="wdl_html"></div>
+    </div>
 </div>

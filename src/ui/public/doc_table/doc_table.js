@@ -11,7 +11,7 @@ define(function (require) {
   require('ui/doc_table/components/table_row');
 
   require('ui/modules').get('kibana')
-  .directive('docTable', function (config, Notifier, getAppState, $http) {
+  .directive('docTable', function (config, Notifier, getAppState, $http,$rootScope) {
     return {
       restrict: 'E',
       template: html,
@@ -239,6 +239,7 @@ define(function (require) {
             if ($scope.searchSource !== $scope.searchSource) return;
 
             $scope.hits = resp.hits.hits;
+            $rootScope.cccHits = $scope.hits;
 
             return $scope.searchSource.onResults().then(onResults);
           }).catch(notify.fatal);

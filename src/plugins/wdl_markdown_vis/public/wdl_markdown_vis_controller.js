@@ -6,11 +6,41 @@ define(function (require) {
   });
 
   var module = require('ui/modules').get('kibana/markdown_vis', ['kibana']);
-  module.controller('KbnWdlMarkdownVisController', function ($scope, Private, $sce, $interpolate, $route, $http) {
+  module.controller('KbnWdlMarkdownVisController', function ($scope, Private, $sce, $interpolate, $route, $http, config) {
+
+
     //TODO - why is $sce always visible in these functions, but I need to
     // have a scoped variable to hold onto interpolate?
     $scope.my_interpolate = $interpolate;
     $scope.my_route = $route;
+
+    $scope.cccWorkflow = {};
+    // see wdl_examples/kibana_add to see how wdl's are added
+    var workflows = config._vals().cccWdlWorkflows;
+    $scope.cccWorkflow.names = [];
+    for (var prop in workflows) {
+      if (workflows.hasOwnProperty(prop)) {
+        $scope.cccWorkflow.names.push(prop);
+      }
+    }
+    $scope.$watch('cccWorkflow.name', function (name) {
+      if (!name) { return; }
+      var workflows = config._vals().cccWdlWorkflows;
+      var workflow = undefined;
+      for (var prop in workflows) {
+        if (prop === name) {
+          workflow = workflows[prop];
+        }
+      }
+      if (!workflow) {
+        $scope.cccStatusText = 'Workflow ' + $scope.cccWorkflow.name + ' not found.';
+        return;
+      }
+      $scope.sourceInputs.wdlSource = window.atob(workflow.wdl_base64_script_body);
+      $scope.sourceInputs.metaParamName = workflow.meta_param_name;
+    });
+
+
     $scope.processMarkdown = function (markdown, resp) {
       if (!$scope.markdown) {
         return;
@@ -32,12 +62,7 @@ define(function (require) {
     $scope.lastQuery = undefined;
     var triggerProcessMarkDown = function () {
       // get filter passed in : we only support lookup by id
-      var query = undefined;
-      if ($scope.my_route.current.locals.savedVis) {
-        query = $scope.my_route.current.locals.savedVis.searchSource.filter()._state.query.query_string.query;
-      } else {
-        query = $scope.my_route.current.locals.dash.searchSource.query()._state.filter[0].query.query_string.query;
-      }
+      var query = $scope.outputs.wdlIdentifier;
       // $scope.my_route.current.locals.savedVis.searchSource.filter()._state.query.query_string.query ;
       // $scope.my_route.current.locals.dash.searchSource.query()._state.filter[0].query.query_string.query;
 
@@ -65,19 +90,131 @@ define(function (require) {
     };
 
 
-    // response from elastic search - request out of scope
-    $scope.$watch('esResponse', function (resp) {
-      // if (resp) {
-      //   $scope.processMarkdown($scope.markdown, resp);
-      // }
-      triggerProcessMarkDown();
+    // cccHits set in rootScope by our modification to doc_table
+    $scope.columns = [];
+    $scope.columnSelections = {};
+    $scope.columnSelections.selectedColumns = [{'name':'ccc_did'}];
+    $scope.$watch('cccHits', function (cccHits) {
+      if (!cccHits) { return; }
+      if (!$scope.cccHits[0] && $scope.cccHits[0]._source) { return; }
+      $scope.columns = [];
+      var obj = $scope.cccHits[0]._source;
+      $scope.columns.push({'name':'**(ccc_did only)'});
+      for (var x in obj) {
+        if (obj.hasOwnProperty(x)) {
+          $scope.columns.push({'name':x});
+        }
+      }
     });
+
+    $scope.sourceInputs = {'wdlSource':undefined};
+    $scope.validation = {'messages':[]};
+    $scope.validate = function (wdlSource) {
+      $scope.validation.messages.push('Under construction. (No REST endpoint for validation)');
+    };
+
+    $scope.results = function (wdlSource) {
+      $scope.validation.messages = [];
+      $scope.validation.messages.push('Checking');
+      triggerProcessMarkDown();
+    };
+
+    $scope.submit = function (wdlSource) {
+      $scope.validation.messages = [];
+      $scope.outputs = {};
+      $scope.validation.messages.push('Submitted ...');
+      // serialize the inputs as form data
+      var formData = new FormData();
+      formData.append(
+        'wdlSource',
+        new Blob([wdlSource],
+                 {type: 'application/octet-stream','Content-Disposition': 'form-data; name="wdlSource"; filename="hello.wdl"'}),
+        'wdlSource'
+        );
+      formData.append(
+        'workflowInputs',
+        new Blob([$scope.sourceInputs.workflowInputs],
+                 {type: 'application/octet-stream','Content-Disposition': 'form-data; name="workflowInputs"; filename="hello.json"'}),
+        'workflowInputs'
+        );
+
+      // note: important that Content-Type is undefined, so that $http completes multipart formdata correctly :-(
+      // see: http://uncorkedstudios.com/blog/multipartformdata-file-upload-with-angularjs
+      var request = {
+        method: 'POST',
+        url: '/api/workflows/v1',
+        headers: {'Content-Type': undefined},
+        data: formData,
+        transformRequest: function (data) { return data; }
+      };
+
+      // send the request and handle response
+      $http(request).then(
+        // OK
+        function (response) {
+          console.log('success',response);
+          $scope.cccStatusText = response.statusText + ' ' + response.data.status;
+          $scope.cccWdlJobId = response.data.id;
+          $scope.validation.messages = [];
+          $scope.validation.messages.push('success: ' + JSON.stringify(response));
+          $scope.outputs.wdlIdentifier = response.data.id;
+          // TODO - keep a record for our dashboard ? if so, do it here ...
+          // var request = {
+          //   method: 'POST',
+          //   url: '/ccc/workflows/'+response.data.id,
+          //   data: {id:workflow.id, workflowInputs:workflowInputs}
+          // };
+          // $http(request).then(function (response) {console.log('OK',response)},function (response) {console.log('ERROR',response)});
+        },
+        // Error
+        function (response) {
+          console.log('error',response);
+          $scope.validation.messages.push('error: ' + JSON.stringify(response));
+        }
+      );
+
+    };
+
+    $scope.$watch('columnSelections', function (columnSelections) {
+      if (!columnSelections.selectedColumns) { return; }
+      if (!$scope.cccHits[0] && $scope.cccHits[0]._source) { return; }
+      var names = columnSelections.selectedColumns.map(function (e) {return e.name;});
+      var workflowInputs = $scope.cccHits.map(function (e) {
+        var p = {};
+        p.ccc_did = e._source.ccc_did;
+        //if no additional columns selected, return a simple string
+        //otherwise return object
+        if (names.indexOf('**(ccc_did only)') === -1) {
+          columnSelections.selectedColumns.forEach(function (c) {
+            p[c.name] = e._source[c.name];
+          });
+        }  else {
+          p = e._source.ccc_did;
+        }
+        return p;
+      });
+      var obj = {};
+      obj[$scope.sourceInputs.metaParamName] = workflowInputs;
+      $scope.sourceInputs.workflowInputs = JSON.stringify(obj);
+    },true);
+
+
+
+
+
+
+    // // response from elastic search - request out of scope
+    // $scope.$watch('esResponse', function (resp) {
+    //   // if (resp) {
+    //   //   $scope.processMarkdown($scope.markdown, resp);
+    //   // }
+    //   triggerProcessMarkDown();
+    // });
 
     // response markdown, trigger call to cromwell
     $scope.$watch('vis.params.markdown', function (markdown) {
       if (!markdown) {return;}
       $scope.markdown = markdown;
-      triggerProcessMarkDown();
     });
 
 
