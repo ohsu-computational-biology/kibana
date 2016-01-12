@@ -113,16 +113,17 @@ define(function (require) {
       $scope.validation.messages.push('Under construction. (No REST endpoint for validation)');
     };
 
-    $scope.results = function (wdlSource) {
+    $scope.results = function () {
       $scope.validation.messages = [];
       $scope.validation.messages.push('Checking');
       triggerProcessMarkDown();
     };
 
     $scope.submit = function (wdlSource) {
-      $scope.validation.messages = [];
+      $scope.submission = {};
+      $scope.submission.messages = [];
       $scope.outputs = {};
-      $scope.validation.messages.push('Submitted ...');
+      $scope.submission.messages.push('Submitted ...');
       // serialize the inputs as form data
       var formData = new FormData();
       formData.append(
@@ -155,21 +156,16 @@ define(function (require) {
           console.log('success',response);
           $scope.cccStatusText = response.statusText + ' ' + response.data.status;
           $scope.cccWdlJobId = response.data.id;
-          $scope.validation.messages = [];
-          $scope.validation.messages.push('success: ' + JSON.stringify(response));
+          $scope.submission.messages = [];
+          $scope.submission.messages.push('success: ' + JSON.stringify(response));
           $scope.outputs.wdlIdentifier = response.data.id;
-          // TODO - keep a record for our dashboard ? if so, do it here ...
-          // var request = {
-          //   method: 'POST',
-          //   url: '/ccc/workflows/'+response.data.id,
-          //   data: {id:workflow.id, workflowInputs:workflowInputs}
-          // };
-          // $http(request).then(function (response) {console.log('OK',response)},function (response) {console.log('ERROR',response)});
+          setTimeout(function () {$scope.results();}, 2000);
         },
         // Error
         function (response) {
           console.log('error',response);
-          $scope.validation.messages.push('error: ' + JSON.stringify(response));
+          $scope.submission.messages = [];
+          $scope.submission.messages.push('error: ' + JSON.stringify(response));
         }
       );
 
@@ -198,18 +194,6 @@ define(function (require) {
       $scope.sourceInputs.workflowInputs = JSON.stringify(obj);
     },true);
 
-
-
-
-
-
-    // // response from elastic search - request out of scope
-    // $scope.$watch('esResponse', function (resp) {
-    //   // if (resp) {
-    //   //   $scope.processMarkdown($scope.markdown, resp);
-    //   // }
-    //   triggerProcessMarkDown();
-    // });
 
     // response markdown, trigger call to cromwell
     $scope.$watch('vis.params.markdown', function (markdown) {

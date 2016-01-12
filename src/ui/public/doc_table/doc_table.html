@@ -2,7 +2,7 @@
   ng-if="hits.length"
   ng-class="{ loading: searchSource.activeFetchCount > 0 }">
 
-  <div class="panel-heading"  ng-if="showSubmitToCCC()">
+  <!-- <div class="panel-heading"  ng-if="showSubmitToCCC()">
     <span class="panel-title"></span>
     <div class="btn-group  pull-right">
       <label for="repeatSelect">CCC wdl:</label>
@@ -16,7 +16,7 @@
       {{cccStatusText}}
       <a ng-href="/app/kibana#/dashboard?_g=(refreshInterval:(display:Off,pause:!f,value:0),time:(from:now-15m,mode:quick,to:now))&_a=(filters:!(),options:(darkTheme:!f),panels:!((col:1,id:wdl,row:1,size_x:12,size_y:6,type:visualization)),query:(query_string:(analyze_wildcard:!t,query:'{{cccWdlJobId}}')),title:'New%20Dashboard')">{{cccWdlJobId}}</a>
     </div>
-  </div>
+  </div> -->
 
   <paginate ng-if="!infiniteScroll" list="hits" per-page="50" top-controls="true">
     <table class="kbn-table table" ng-if="indexPattern">
