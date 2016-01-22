@@ -32,7 +32,7 @@ curl -XPOST  $(docker-machine ip default):9200/.kibana/config/4.2.2-snapshot/_up
  # in /kibana
  $ cd kibana
  $ npm run build
- $ cp target/kibana-4.2.2-snapshot-linux-x64.tar.gz dms-es/services/kibana/kibana-4.2.2-snapshot-linux-x64.tar.gz
+ $ cp target/kibana-4.2.2-snapshot-linux-x64.tar.gz ~/DMS_Omics_Imaging/dms-es/services/kibana/kibana-4.2.2-snapshot-linux-x64.tar.gz
  # copy contents of sha1  target/kibana-4.2.2-snapshot-linux-x64.tar.gz.sha1.txt to dms-es/services/kibana/Dockerfile
 ```
 
@@ -52,6 +52,11 @@ $ docker run -it -v $(pwd):/src -p 0.0.0.0:5601:5601  --link elasticsearch kiban
 
 $ cd /src
 $ npm start
+
+note: if problem
+https://github.com/elastic/kibana/issues/5839#issuecomment-169782122
+
+
 ...
 
 ```

@@ -26,7 +26,7 @@
         <h2>Document Meta &amp; Parameters</h2>
         <div >
           <div class="col-md-4"><select size="12" id="column-selection" multiple ng-multiple="true" ng-model="columnSelections.selectedColumns" ng-options="c.name for c in columns"></select></div>
-          <div class="col-md-8"><input ng-model="sourceInputs.metaParamName"/><br/><textarea rows="9" cols="80"  ng-model="sourceInputs.workflowInputs"></textarea></div>
+          <div class="col-md-8"><input ng-model="sourceInputs.metaParamName"/> &nbsp; <i ng-if="refreshNeeded"  class="fa fa-refresh" style="color:green;" ng-click="refreshParameters()"   ></i><br/><textarea rows="9" cols="80"  ng-model="sourceInputs.workflowInputs"></textarea></div>
           <div class="col-md-12">
             <button class="btn btn-xs" aria-label="Send WDL script" ng-click="submit(sourceInputs.wdlSource)" ng-disabled="!sourceInputs.workflowInputs">
               Submit<span aria-hidden="true" class="fa fa-send"></span>
@@ -38,10 +38,12 @@
     </div>
 
     <div class="col-md-12">
-      <button class="btn btn-xs" aria-label="Show WDL response" ng-click="results(outputs.wdlIdentifier)" ng-if="outputs.wdlIdentifier">
+      <button class="btn btn-xs" aria-label="Show WDL response" ng-click="checkResults(outputs.wdlIdentifier)" ng-if="outputs.wdlIdentifier">
         Refresh<span aria-hidden="true" class="fa fa-refresh"></span>
       </button>
     </div>
+    <div class="col-md-12 alert " ng-repeat="info in results.messages track by $index">{{info}}</div>
+
     <div  class="pull-left">
       <div ng-bind-html="wdl_html"></div>
     </div>

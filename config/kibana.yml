@@ -1,22 +1,25 @@
+
 # Kibana is served by a back end server. This controls which port to use.
 # server.port: 5601
 
 # The host to bind the server to.
 # server.host: "0.0.0.0"
 
-# If you are running kibana behind a proxy, and want to mount it at a path,
-# specify that path here. The basePath can't end in a slash.
-# server.basePath: ""
-
 # A value to use as a XSRF token. This token is sent back to the server on each request
 # and required if you want to execute requests from other clients (like curl).
 # server.xsrf.token: ""
 
+# If you are running kibana behind a proxy, and want to mount it at a path,
+# specify that path here. The basePath can't end in a slash.
+# server.basePath: ""
+
 # The Elasticsearch instance to use for all your queries.
-# elasticsearch.url: "http://localhost:9200"
 elasticsearch.url: "http://192.168.99.100:9200"
-# note: this may be necessary to mix this version of kibana with newer ES instances
-# curl -XPUT $(docker-machine ip default):9200  -d '{ "index" : { "max_result_window" : 2147483647 } }'
+
+optimize:
+  sourceMaps: '#cheap-source-map' # options -> http://webpack.github.io/docs/configuration.html#devtool
+  unsafeCache: true
+  lazyPrebuild: false
 
 # preserve_elasticsearch_host true will send the hostname specified in `elasticsearch`. If you set it to false,
 # then the host you use to connect to *this* Kibana instance will be sent.
@@ -29,7 +32,7 @@ elasticsearch.url: "http://192.168.99.100:9200"
 # The default application to load.
 # kibana.defaultAppId: "discover"
 
-# If your Elasticsearch is protected with basic auth, this is the user credentials
+# If your Elasticsearch is protected with basic auth, these are the user credentials
 # used by the Kibana server to perform maintenance on the kibana_index at startup. Your Kibana
 # users will still need to authenticate with Elasticsearch (which is proxied through
 # the Kibana server)
@@ -80,4 +83,4 @@ elasticsearch.url: "http://192.168.99.100:9200"
 # logging.quiet: false
 
 # Set this to true to log all events, including system usage information and all requests.
-# logging.verbose
+# logging.verbose: false

@@ -66,24 +66,26 @@ define(function (require) {
       // $scope.my_route.current.locals.savedVis.searchSource.filter()._state.query.query_string.query ;
       // $scope.my_route.current.locals.dash.searchSource.query()._state.filter[0].query.query_string.query;
 
-      if ($scope.lastQuery === query) {return;}
-      $scope.lastQuery = query;
+      //if ($scope.lastQuery === query) {return;}
+      //$scope.lastQuery = query;
 
       // ----- get info from cromwell server
       var request = {
         method: 'get',
-        url: '/api/workflows/v1/' + query + '/metadata'
+        url: '/api/workflows/v1/' + query + '/status'
       };
       // send the request and handle response
       $http(request).then(
         // OK
         function (response) {
           console.log('success', response);
+          $scope.results.messages = ['success'];
           $scope.processMarkdown($scope.markdown, response);
         },
         // Error
         function (response) {
           console.log('error', response);
+          $scope.results.messages = ['error'];
           $scope.processMarkdown($scope.markdown, response);
         }
       );
@@ -97,25 +99,31 @@ define(function (require) {
     $scope.$watch('cccHits', function (cccHits) {
       if (!cccHits) { return; }
       if (!$scope.cccHits[0] && $scope.cccHits[0]._source) { return; }
-      $scope.columns = [];
-      var obj = $scope.cccHits[0]._source;
-      $scope.columns.push({'name':'**(ccc_did only)'});
-      for (var x in obj) {
-        if (obj.hasOwnProperty(x)) {
-          $scope.columns.push({'name':x});
+      // only refresh first time
+      if ($scope.columns.length === 0)  {
+        var obj = $scope.cccHits[0]._source;
+        for (var x in obj) {
+          if (obj.hasOwnProperty(x)) {
+            $scope.columns.push({'name':x});
+          }
         }
+        $scope.columns.sort();
+        $scope.columns.unshift({'name':'**(ccc_did only)'});
       }
+      $scope.refreshNeeded = $scope.sourceInputs && $scope.sourceInputs.workflowInputs &&  $scope.sourceInputs.workflowInputs.length > 0;
     });
 
     $scope.sourceInputs = {'wdlSource':undefined};
     $scope.validation = {'messages':[]};
     $scope.validate = function (wdlSource) {
+      $scope.validation.messages = [];
       $scope.validation.messages.push('Under construction. (No REST endpoint for validation)');
     };
 
-    $scope.results = function () {
-      $scope.validation.messages = [];
-      $scope.validation.messages.push('Checking');
+    $scope.results = {};
+    $scope.checkResults = function () {
+      $scope.results.messages = [];
+      $scope.results.messages.push('Checking...');
       triggerProcessMarkDown();
     };
 
@@ -159,7 +167,7 @@ define(function (require) {
           $scope.submission.messages = [];
           $scope.submission.messages.push('success: ' + JSON.stringify(response));
           $scope.outputs.wdlIdentifier = response.data.id;
-          setTimeout(function () {$scope.results();}, 2000);
+          setTimeout(function () {$scope.checkResults();}, 2000);
         },
         // Error
         function (response) {
@@ -171,9 +179,15 @@ define(function (require) {
 
     };
 
+    $scope.refreshParameters = function () {
+      //trigger a change to columnSelections watch
+      $scope.columnSelections.refreshNeeded = true;
+    };
+
     $scope.$watch('columnSelections', function (columnSelections) {
       if (!columnSelections.selectedColumns) { return; }
-      if (!$scope.cccHits[0] && $scope.cccHits[0]._source) { return; }
+      if (!$scope.cccHits) { return; }
+      if (!($scope.cccHits[0] && $scope.cccHits[0]._source)) { return; }
       var names = columnSelections.selectedColumns.map(function (e) {return e.name;});
       var workflowInputs = $scope.cccHits.map(function (e) {
         var p = {};
@@ -190,12 +204,16 @@ define(function (require) {
         return p;
       });
       var obj = {};
+      if ($scope.sourceInputs && $scope.sourceInputs.workflowInputs && $scope.sourceInputs.workflowInputs.length  > 0) {
+        obj = JSON.parse($scope.sourceInputs.workflowInputs);
+      }
       obj[$scope.sourceInputs.metaParamName] = workflowInputs;
       $scope.sourceInputs.workflowInputs = JSON.stringify(obj);
+      $scope.refreshNeeded =  $scope.columnSelections.refreshNeeded = false;
     },true);
 
 
-    // response markdown, trigger call to cromwell
+    // response markdown, update scope
     $scope.$watch('vis.params.markdown', function (markdown) {
       if (!markdown) {return;}
       $scope.markdown = markdown;
