@@ -37,6 +37,9 @@ define(function (require) {
         return;
       }
       $scope.sourceInputs.wdlSource = window.atob(workflow.wdl_base64_script_body);
+      if (workflow.wdl_base64_script_parameters) {
+        $scope.sourceInputs.workflowInputs = window.atob(workflow.wdl_base64_script_parameters);
+      }
       $scope.sourceInputs.metaParamName = workflow.meta_param_name;
     });
 
